@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Prediksi & Kelayakan Harga Kos Madiun</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 1000px; margin: 30px auto; padding: 0 20px; background: #f3f4f6; color: #1f2937; }
+        h2 { text-align: center; color: #111827; margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: white; padding: 22px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        label { font-weight: 600; font-size: 0.9rem; display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 9px; margin-top: 4px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 11px; margin-top: 18px; background: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; background: #dbeafe; color: #1e40af; }
+        .ai-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px; border-radius: 6px; margin-top: 12px; font-size: 0.95rem; line-height: 1.6; }
+        img { max-width: 100%; margin-top: 10px; border-radius: 6px; border: 1px solid #e5e7eb; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        th, td { border-bottom: 1px solid #e5e7eb; padding: 10px; text-align: left; }
+        th { background: #f9fafb; }
+    </style>
+</head>
+<body>
+    <h2>Sistem Prediksi Harga & Kelayakan Kos Madiun (ML + Fuzzy)</h2>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Data & Fasilitas Kos</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <label>Nama Kos</label>
+                <input type="text" name="nama_kos" placeholder="Contoh: Kos Melati Indah" required>
+
+                <label>Jarak ke Kampus PNM (km)</label>
+                <input type="number" step="0.1" min="0.1" max="10" name="jarak_km" value="1.0" required>
+
+                <label>Rating Kos (1.0 - 5.0)</label>
+                <input type="number" step="0.1" min="1.0" max="5.0" name="rating" value="4.2" required>
+
+                <label>Fasilitas AC</label>
+                <select name="ac">
+                    <option value="ya">Ya (Ber-AC)</option>
+                    <option value="tidak" selected>Tidak (Non-AC)</option>
+                </select>
+
+                <label>Harga Tawaran Pemilik Kos (Ribu Rp / Bulan)</label>
+                <input type="number" step="10" name="harga_tawaran" placeholder="Contoh: 550 (untuk Rp 550.000)" required>
+
+                <button type="submit">Analisis & Jelaskan dengan AI</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Hasil Analisis Cerdas</h3>
+            {% if hasil %}
+                <p><strong>Nama Kos:</strong> {{ nama_kos }}</p>
+                <p><strong>Harga Tawaran:</strong> Rp {{ harga_tawaran|floatformat:0 }} ribu / bulan</p>
+                <p><strong>Prediksi Harga Wajar (ML):</strong> Rp {{ estimasi_ml|floatformat:0 }} ribu / bulan</p>
+                <p><strong>Evaluasi Fuzzy:</strong> <span class="badge">{{ status_fuzzy }} (Skor: {{ skor_fuzzy }}/100)</span></p>
+
+                <h4>Grafik Perbandingan Harga</h4>
+                <img src="data:image/png;base64,{{ grafik_b64 }}" alt="Grafik Matplotlib">
+
+                <h4>Penjelasan Grafik (Gemini AI)</h4>
+                <div class="ai-box">{{ analisis_ai|linebreaksbr }}</div>
+            {% else %}
+                <p style="color: #6b7280;">Masukkan data kos di formulir sebelah kiri untuk melihat hasil prediksi harga wajar, evaluasi kelayakan Fuzzy, grafik Matplotlib, dan analisis otomatis dari Gemini AI.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3>Riwayat Pencarian Kos Tersimpan (Database SQLite)</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nama Kos</th>
+                    <th>Spesifikasi</th>
+                    <th>Harga Tawaran</th>
+                    <th>Prediksi ML</th>
+                    <th>Keputusan Fuzzy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in riwayat %}
+                <tr>
+                    <td><strong>{{ item.nama_kos }}</strong></td>
+                    <td>Jarak {{ item.jarak_km }} km / Rating {{ item.rating }} / AC: {{ item.ac }}</td>
+                    <td>Rp {{ item.harga_tawaran|floatformat:0 }} rb</td>
+                    <td>Rp {{ item.estimasi_ml|floatformat:0 }} rb</td>
+                    <td>{{ item.status_fuzzy }} ({{ item.skor_fuzzy }})</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="text-align: center; color: #6b7280;">Belum ada data riwayat tersimpan.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
