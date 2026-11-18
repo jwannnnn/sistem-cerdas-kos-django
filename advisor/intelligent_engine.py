@@ -104,7 +104,7 @@ def jelaskan_grafik_gemini(pil_image, nama_kos, harga_tawaran, estimasi_ml, kate
             f"Berikan saran praktis apakah kos ini layak diambil oleh mahasiswa."
         )
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=[pil_image, prompt]
         )
         return response.text
